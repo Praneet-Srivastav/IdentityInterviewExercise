@@ -1,0 +1,4 @@
+com\identity\hooks\Hooks.class
+com\identity\TestContext.class
+com\identity\runners\TestRunner.class
+com\identity\steps\CarValuationSteps.class
