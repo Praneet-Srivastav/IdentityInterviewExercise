@@ -1,6 +1,31 @@
+# Compiled class files
+*.class
 
-### VS Code ###
+# Build directories
+target/
+build/
+
+# IDE files
+.idea/
+*.iml
 .vscode/
+.settings/
+.project
+.classpath
 
-### Mac OS ###
+# Logs
+*.log
+
+# Package files
+*.jar
+*.war
+*.ear
+
+# Maven
+.mvn/
+mvnw
+mvnw.cmd
+
+# OS specific files
 .DS_Store
+Thumbs.db
