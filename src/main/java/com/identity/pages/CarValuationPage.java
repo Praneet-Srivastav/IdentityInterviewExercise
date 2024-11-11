@@ -14,8 +14,8 @@ public class CarValuationPage {
     private static final String BASE_URL = "https://www.webuyanycar.com/car-valuation/";
     private static final int MIN_MILEAGE = 10000;
     private static final int MAX_MILEAGE_RANGE = 50000;
-    private static final int DEFAULT_TIMEOUT = 1000; // Increased from 1000 to 5000
-    private static final int ERROR_WAIT_TIMEOUT = 10000; // New constant for error waiting
+    private static final int DEFAULT_TIMEOUT = 5000;
+    private static final int ERROR_WAIT_TIMEOUT = 10000;
 
     // Page elements
     private final Page page;
@@ -46,10 +46,16 @@ public class CarValuationPage {
      */
     public void navigateToValuationPage() {
         page.navigate(BASE_URL);
-        page.waitForTimeout(DEFAULT_TIMEOUT);
+        page.waitForLoadState(LoadState.NETWORKIDLE);
 
-        if (cookieAcceptButton.isVisible()) {
-            cookieAcceptButton.click();
+        try {
+            cookieAcceptButton.waitFor(new Locator.WaitForOptions().setTimeout(DEFAULT_TIMEOUT));
+            if (cookieAcceptButton.isVisible()) {
+                cookieAcceptButton.click();
+            }
+        } catch (TimeoutError e) {
+            // Cookie button might not appear if cookies are already accepted
+            System.out.println("Cookie accept button not found - continuing");
         }
     }
 
@@ -77,28 +83,27 @@ public class CarValuationPage {
      */
     public boolean clickCarValuation(String regNumber) {
         submitButton.click();
-        try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        
+        // Wait for any network activity to complete
+        page.waitForLoadState(LoadState.NETWORKIDLE);
 
         Locator errorHeading = page.getByRole(AriaRole.HEADING, 
             new Page.GetByRoleOptions().setName("Sorry, we couldn't find your"));
 
+        // First check for error message
         try {
-            // Wait for either the vehicle questions section or error message
-            if (errorHeading.isVisible()) {
-                System.out.println("SORRY, NO VEHICLE FOUND WITH REG: " + regNumber);
-                return false;
-            } else if (vehicleQuestionsSection.isVisible()) {
+            errorHeading.waitFor(new Locator.WaitForOptions().setTimeout(ERROR_WAIT_TIMEOUT));
+            System.out.println("SORRY, NO VEHICLE FOUND WITH REG: " + regNumber);
+            return false;
+        } catch (TimeoutError e) {
+            // If error message not found, check for vehicle questions section
+            try {
+                vehicleQuestionsSection.waitFor(new Locator.WaitForOptions().setTimeout(ERROR_WAIT_TIMEOUT));
                 System.out.println("Vehicle questions section found for reg: " + regNumber);
                 return true;
-            } else {
-                throw new PlaywrightException("Neither vehicle questions section nor error message is visible");
+            } catch (TimeoutError e2) {
+                throw new PlaywrightException("Neither vehicle questions section nor error message appeared within " + ERROR_WAIT_TIMEOUT + "ms");
             }
-        } catch (PlaywrightException e) {
-            throw new PlaywrightException("Timeout waiting for response after " + DEFAULT_TIMEOUT + "ms");
         }
     }
 
