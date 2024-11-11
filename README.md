@@ -49,7 +49,7 @@ src/
 ## Setup Instructions
 1. Clone the repository:
    ```bash
-   git clone [repository-url]
+   git clone (https://github.com/Praneet-Srivastav/IdentityInterviewExercise.git)
    ```
 2. Navigate to project directory:
    ```bash
@@ -61,6 +61,7 @@ src/
    ```
 
 ## Running Tests
+Run the tests using the provided runner TestRunner
 Execute tests using Maven:
 ```bash
 mvn clean test
