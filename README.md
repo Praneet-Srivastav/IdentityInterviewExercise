@@ -61,7 +61,7 @@ Execute tests using Maven:
 mvn clean test
 ```
 
-The test runner is configured to execute all scenarios in the feature files. Test reports will be generated in the `target` directory.
+The test runner is configured to execute all scenarios tag as @done in the feature files. Test reports will be generated in the `target` directory.
 
 ## Feature Description
 The framework validates car details by:
