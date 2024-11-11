@@ -4,6 +4,7 @@ import com.microsoft.playwright.*;
 import com.identity.model.CarDetails;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
+import com.microsoft.playwright.options.WaitUntilState;
 
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 
@@ -45,11 +46,23 @@ public class CarValuationPage {
      * Navigates to the car valuation page and handles cookie consent
      */
     public void navigateToValuationPage() {
-        page.navigate(BASE_URL);
-        page.waitForLoadState(LoadState.NETWORKIDLE);
+        // Navigate with a more lenient load strategy
+        page.navigate(BASE_URL, new Page.NavigateOptions()
+            .setWaitUntil(WaitUntilState.DOMCONTENTLOADED)
+            .setTimeout(30000));
+
+        // Wait for the page to be interactive
+        try {
+            page.waitForLoadState(LoadState.DOMCONTENTLOADED, 
+                new Page.WaitForLoadStateOptions().setTimeout(30000));
+        } catch (TimeoutError e) {
+            System.out.println("Page load timeout - continuing with available content");
+        }
 
         try {
-            cookieAcceptButton.waitFor(new Locator.WaitForOptions().setTimeout(DEFAULT_TIMEOUT));
+            cookieAcceptButton.waitFor(new Locator.WaitForOptions()
+                .setTimeout(DEFAULT_TIMEOUT));
+            
             if (cookieAcceptButton.isVisible()) {
                 cookieAcceptButton.click();
             }
@@ -85,20 +98,27 @@ public class CarValuationPage {
         submitButton.click();
         
         // Wait for any network activity to complete
-        page.waitForLoadState(LoadState.NETWORKIDLE);
+        try {
+            page.waitForLoadState(LoadState.NETWORKIDLE, 
+                new Page.WaitForLoadStateOptions().setTimeout(30000));
+        } catch (TimeoutError e) {
+            System.out.println("Network idle timeout - continuing with available content");
+        }
 
         Locator errorHeading = page.getByRole(AriaRole.HEADING, 
             new Page.GetByRoleOptions().setName("Sorry, we couldn't find your"));
 
         // First check for error message
         try {
-            errorHeading.waitFor(new Locator.WaitForOptions().setTimeout(ERROR_WAIT_TIMEOUT));
+            errorHeading.waitFor(new Locator.WaitForOptions()
+                .setTimeout(ERROR_WAIT_TIMEOUT));
             System.out.println("SORRY, NO VEHICLE FOUND WITH REG: " + regNumber);
             return false;
         } catch (TimeoutError e) {
             // If error message not found, check for vehicle questions section
             try {
-                vehicleQuestionsSection.waitFor(new Locator.WaitForOptions().setTimeout(ERROR_WAIT_TIMEOUT));
+                vehicleQuestionsSection.waitFor(new Locator.WaitForOptions()
+                    .setTimeout(ERROR_WAIT_TIMEOUT));
                 System.out.println("Vehicle questions section found for reg: " + regNumber);
                 return true;
             } catch (TimeoutError e2) {
